@@ -17,7 +17,7 @@ class MapPropertiesTest extends TestCase
         'mapped_field_1' => 'mappedProp1',
         'mapped_field_2' => 'mappedProp2',
         'unmapped_field' => 'unmapped_field',
-        'unmapped_prop' => 'unmapped_prop'
+        'unmapped_prop' => 'unmapped_prop',
     ];
 
     public function testMapFieldsToProperties()
@@ -30,32 +30,38 @@ class MapPropertiesTest extends TestCase
 
         $record = new MappedRecordFixture();
         $spec = $record->fixtureGetSpec();
-        foreach($this->mapping as $field => $property) {
+        foreach ($this->mapping as $field => $property) {
             $this->assertEquals($property, $spec->mapFieldToProperty($field));
         }
         $this->assertEquals(
             // ['mappedProp1' => 'mappedProp1', ...]
-            array_combine(array_values($this->mapping), array_values($this->mapping)),
+            array_combine(
+                array_values($this->mapping),
+                array_values($this->mapping)
+            ),
             $spec->mapFieldsToProperties($this->mapping)
         );
 
         $this->expectException(SpecException::class);
-        $spec->mapFieldsToProperties(array_merge(['mappedProp1' => 'duplicate key'], $this->mapping));
+        $spec->mapFieldsToProperties(
+            array_merge(['mappedProp1' => 'duplicate key'], $this->mapping)
+        );
     }
 
-    public function testMapPropertiesToFields() {
+    public function testMapPropertiesToFields()
+    {
         // ['mappedProp1' => 'mapped_field_1', ...]
-        $data = array_combine(array_values($this->mapping), array_keys($this->mapping));
+        $data = array_combine(
+            array_values($this->mapping),
+            array_keys($this->mapping)
+        );
 
         $spec = new SpecFixture(UnmappedRecordFixture::class);
-        $this->assertEquals(
-            $data,
-            $spec->mapPropertiesToFields($data)
-        );
+        $this->assertEquals($data, $spec->mapPropertiesToFields($data));
 
         $record = new MappedRecordFixture();
         $spec = $record->fixtureGetSpec();
-        foreach($data as $property => $field) {
+        foreach ($data as $property => $field) {
             $this->assertEquals($field, $spec->mapPropertyToField($property));
         }
         $this->assertEquals(
@@ -65,6 +71,8 @@ class MapPropertiesTest extends TestCase
         );
 
         $this->expectException(SpecException::class);
-        $spec->mapPropertiesToFields(array_merge(['mapped_field_1' => 'duplicate key'], $data));
+        $spec->mapPropertiesToFields(
+            array_merge(['mapped_field_1' => 'duplicate key'], $data)
+        );
     }
 }

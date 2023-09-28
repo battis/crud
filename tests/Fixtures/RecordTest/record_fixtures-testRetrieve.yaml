@@ -1,0 +1,13 @@
+record_fixtures:
+  - id: 1
+    field1: 'testRow1'
+    field2: 123
+    field3: null
+  - id: 2
+    field1: 'test row 2'
+    field2: 456
+    field3: null
+  - id: 3
+    field1: 'testRow1'
+    field2: 456
+    field3: 789

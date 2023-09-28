@@ -1,0 +1,5 @@
+record_fixtures:
+  - id: 2
+    field1: 'test row 2'
+    field2: 456
+    field3: null

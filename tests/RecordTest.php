@@ -11,22 +11,18 @@ class RecordTest extends TestCase
 {
     protected function setUp(): void
     {
-        $this->getPDO()->query(file_get_contents($this->getPathToFixture('record_fixtures.sql')));
         parent::setUp();
-    }
-
-    public function getDataset()
-    {
-        return $this->getCsvDataSet('record_fixtures');
+        Connection::setPDO($this->getPDO());
     }
 
     private function assertRecordEquals(array $expected, Record $actual)
     {
-        list ($id, $field1, $field2, $field3) = $expected;
-        $this->assertEquals($id, $actual->id);
-        $this->assertEquals($field1, $actual->field1);
-        $this->assertEquals($field2, $actual->field2);
-        $this->assertEquals($field3, $actual->field3);
+        $this->assertEquals($expected, [
+            'id' => $actual->id,
+            'field1' => $actual->field1,
+            'field2' => $actual->field2,
+            'field2' => $actual->field3,
+        ]);
     }
 
     public function testAssign()
@@ -37,27 +33,26 @@ class RecordTest extends TestCase
                     'id' => 1,
                     'field1' => 'test1',
                     'field2' => 123,
-                    'field3' => 456
+                    'field3' => 456,
                 ],
-                [1, 'test1', 123, 456]
-            ], [
-                [],
-                [null, null, null, null]
+                [1, 'test1', 123, 456],
             ],
+            [[], [null, null, null, null]],
             [
                 [
                     'field1' => 'test2',
-                    'field3' => 789
+                    'field3' => 789,
                 ],
-                [null, 'test2', null, 789]
-            ]
+                [null, 'test2', null, 789],
+            ],
         ];
 
-        foreach($data as list($arg, list($id, $field1, $field2, $field3))) {
+        foreach ($data as $datum) {
+            list($arg, list($id, $field1, $field2, $field3)) = $datum;
             $record = new RecordFixture($arg);
 
             if ($id === null) {
-                $this->assertObjectNotHasAttribute('id', $record);
+                $this->assertFalse(property_exists($record, 'id'));
             } else {
                 $this->assertEquals($id, $record->id);
             }
@@ -74,50 +69,53 @@ class RecordTest extends TestCase
                 [
                     'field1' => 'test1',
                     'field2' => 123,
-                    'field3' => 456
+                    'field3' => 456,
                 ],
-                [3, 'test1', 123, 456]
+                [3, 'test1', 123, 456],
             ],
             [
                 [
                     'field1' => 'TEst 2',
                     'field2' => 987,
-                    'field3' => 789
+                    'field3' => 789,
                 ],
-                [4, 'TEst 2', 987, 789]
-            ]
+                [4, 'TEst 2', 987, 789],
+            ],
         ];
 
         $i = 1;
-        Connection::setPDO($this->getPDO());
-        foreach ($data as list ($arg, $expected)) {
-
+        foreach ($data as list($arg, $expected)) {
             $record = RecordFixture::create($arg);
 
-            $this->assertTableEqualsCsv('record_fixtures', "record_fixtures-testCreate-$i");
+            $this->assertTablesEqualYaml(
+                "record_fixtures-testCreate-$i",
+                'record_fixtures'
+            );
             $this->assertRecordEquals($expected, $record);
 
             $i++;
         }
 
         $this->assertNull(RecordFixture::create(['not a field' => 'value']));
-        $this->assertTableEqualsCsv('record_fixtures', "record_fixtures-testCreate-2");
+        $this->assertTablesEqualYaml(
+            'record_fixtures-testCreate-2',
+            'record_fixtures'
+        );
     }
 
     public function testRead()
     {
         $data = [
             1 => [1, 'testRow1', 123, null],
-            2 => [2, 'test row 2', 456, null]
+            2 => [2, 'test row 2', 456, null],
         ];
 
-        $this->assertTableEqualsCsv('record_fixtures', 'record_fixtures');
+        $this->assertTablesEqualYaml('record_fixtures', 'record_fixtures');
 
-        foreach($data as $id => $expected) {
-
+        foreach ($data as $id => $expected) {
             $record = RecordFixture::read($id);
 
-            $this->assertTableEqualsCsv('record_fixtures', 'record_fixtures');
+            $this->assertTablesEqualYaml('record_fixtures', 'record_fixtures');
             $this->assertRecordEquals($expected, $record);
         }
 
@@ -126,52 +124,49 @@ class RecordTest extends TestCase
 
     public function testRetrieve()
     {
-        $this->getPDO()->query("INSERT INTO record_fixtures (field1, field2, field3) VALUES ('testRow1', 456, 789)");
+        $this->getPDO()->query(
+            "INSERT INTO record_fixtures (field1, field2, field3) VALUES ('testRow1', 456, 789)"
+        );
 
         $data = [
             [
                 ['field1' => 'testRow1'],
                 2,
-                [
-                    [1, 'testRow1', 123, null],
-                    [3, 'testRow1', 456, 789]
-                ]
+                [[1, 'testRow1', 123, null], [3, 'testRow1', 456, 789]],
             ],
             [
                 ['field2' => 456],
                 2,
-                [
-                    [2, 'test row 2', 456, null],
-                    [3, 'testRow1', 456, 789]
-                ]
+                [[2, 'test row 2', 456, null], [3, 'testRow1', 456, 789]],
             ],
-            [
-                ['field3' => -10],
-                0,
-                []
-            ],
+            [['field3' => -10], 0, []],
             [
                 null,
                 3,
                 [
                     [1, 'testRow1', 123, null],
                     [2, 'test row 2', 456, null],
-                    [3, 'testRow1', 456, 789]
-                ]
-            ]
+                    [3, 'testRow1', 456, 789],
+                ],
+            ],
         ];
 
-        $this->assertTableEqualsCsv('record_fixtures', 'record_fixtures-testRetrieve');
+        $this->assertTablesEqualYaml(
+            'record_fixtures-testRetrieve',
+            'record_fixtures'
+        );
 
-        foreach($data as list($arg, $count, $values)) {
-
+        foreach ($data as list($arg, $count, $values)) {
             if ($arg === null) {
                 $result = RecordFixture::retrieve();
             } else {
                 $result = RecordFixture::retrieve($arg);
             }
 
-            $this->assertTableEqualsCsv('record_fixtures', 'record_fixtures-testRetrieve');
+            $this->assertTablesEqualYaml(
+                'record_fixtures-testRetrieve',
+                'record_fixtures'
+            );
 
             $this->assertCount($count, $result);
             for ($i = 0; $i < $count; $i++) {
@@ -184,20 +179,23 @@ class RecordTest extends TestCase
     {
         $data = [
             1 => [1, 'testRow1', 456, 789],
-            2 => [2, 'test row 2', 123, 456]
+            2 => [2, 'test row 2', 123, 456],
         ];
 
-        $this->assertTableEqualsCsv('record_fixtures', 'record_fixtures');
+        $this->assertTablesEqualYaml('record_fixtures', 'record_fixtures');
 
-        foreach($data as $id => $expected) {
+        foreach ($data as $id => $expected) {
             list($id, $field1, $field2, $field3) = $expected;
             $record = RecordFixture::update([
                 'id' => $id,
                 'field2' => $field2,
-                'field3' => $field3
+                'field3' => $field3,
             ]);
 
-            $this->assertTableEqualsCsv('record_fixtures', "record_fixtures-testUpdate-$id");
+            $this->assertTablesEqualYaml(
+                "record_fixtures-testUpdate-$id",
+                'record_fixtures'
+            );
             $this->assertRecordEquals($expected, $record);
         }
 
@@ -208,13 +206,16 @@ class RecordTest extends TestCase
     {
         $data = [
             1 => [1, 'testRow1', 123, null],
-            2 => [2, 'test row 2', 456, null]
+            2 => [2, 'test row 2', 456, null],
         ];
 
-        foreach($data as $id => $expected) {
+        foreach ($data as $id => $expected) {
             $record = RecordFixture::delete($id);
 
-            $this->assertTableEqualsCsv('record_fixtures', "record_fixtures-testDelete-$id");
+            $this->assertTablesEqualYaml(
+                "record_fixtures-testDelete-$id",
+                'record_fixtures'
+            );
             $this->assertRecordEquals($expected, $record);
         }
 
@@ -225,22 +226,25 @@ class RecordTest extends TestCase
     {
         $data = [
             1 => [1, 'testRow1', 456, 789],
-            2 => [2, 'test row 2', 123, 456]
+            2 => [2, 'test row 2', 123, 456],
         ];
 
-        $this->assertTableEqualsCsv('record_fixtures', 'record_fixtures');
+        $this->assertTablesEqualYaml('record_fixtures', 'record_fixtures');
 
-        foreach($data as $id => $expected) {
-            list($id, $field1, $field2, $field3) = $expected;
+        foreach ($data as $id => $expected) {
+            list($id, , $field2, $field3) = $expected;
 
             $record = RecordFixture::read($id);
 
             $record->save([
                 'field2' => $field2,
-                'field3' => $field3
+                'field3' => $field3,
             ]);
 
-            $this->assertTableEqualsCsv('record_fixtures', "record_fixtures-testUpdate-$id");
+            $this->assertTablesEqualYaml(
+                "record_fixtures-testUpdate-$id",
+                'record_fixtures'
+            );
             $this->assertRecordEquals($expected, $record);
         }
 
@@ -248,10 +252,5 @@ class RecordTest extends TestCase
         $this->getPDO()->query('DELETE FROM record_fixtures WHERE id = 1');
         $this->expectException(RecordException::class);
         $record->save(['field1' => 'fails because backing record deleted']);
-    }
-
-    protected function tearDown(): void
-    {
-        $this->getPDO()->query('DROP TABLE record_fixtures');
     }
 }

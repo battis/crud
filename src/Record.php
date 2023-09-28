@@ -174,9 +174,7 @@ abstract class Record
         $table = $s->getTableName();
         $primaryKey = $s->getPrimaryKey();
 
-        $statement = $pdo->prepare(
-            "DELETE FROM $table WHERE $primaryKey = ?"
-        );
+        $statement = $pdo->prepare("DELETE FROM $table WHERE $primaryKey = ?");
         if ($statement->execute([$id])) {
             return $result;
         }
@@ -192,7 +190,7 @@ abstract class Record
                 );
             } else {
                 // TODO better solution to PHP 8.2 deprecation of dynamic property declaration
-                @($this->$property = $value);
+                @$this->$property = $value;
             }
         }
     }
