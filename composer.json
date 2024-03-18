@@ -10,7 +10,7 @@
   "require": {
     "ext-pdo": "*",
     "battis/data-utilities": "^1.1",
-    "battis/hydratable": "^0.1.0",
+    "battis/hydratable": "^0.1",
     "envms/fluentpdo": "^2.2"
   },
   "require-dev": {
