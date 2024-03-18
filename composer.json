@@ -14,7 +14,7 @@
     "envms/fluentpdo": "^2.2"
   },
   "require-dev": {
-    "battis/phpunit-pdo": "dev-main"
+    "battis/phpunit-pdo": "0.1"
   },
   "autoload": {
     "psr-4": {
